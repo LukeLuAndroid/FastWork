@@ -1,0 +1,77 @@
+android {
+    buildTypes {
+        debug {
+            //crash分析相关参数
+            ext.enableCrashlytics = false
+            ext.alwaysUpdateBuildId = false
+        }
+    }
+
+    dexOptions {
+        if (isDebug()) {
+            //预 dex 库依赖项
+            preDexLibraries true
+            //dex-in-process 时要使用的最大线程数量
+            maxProcessCount 8
+            dexInProcess true
+            // 忽略方法数限制的检查
+            jumboMode true
+        }
+    }
+
+    aaptOptions {
+        //禁止png转webp
+        if (isDebug()) {
+            cruncherEnabled false
+        }
+    }
+
+    compileOptions {
+        incremental = true  //开启增量编译
+    }
+
+    flavorDimensions "stage"
+    productFlavors {
+        // When building a variant that uses this flavor, the following configurations
+        // override those in the defaultConfig block.
+        dev {
+            // To avoid using legacy multidex when building from the command line,
+            // set minSdkVersion to 21 or higher. When using Android Studio 2.3 or higher,
+            // the build automatically avoids legacy multidex when deploying to a device running
+            // API level 21 or higher—regardless of what you set as your minSdkVersion.
+            dimension "stage"
+            minSdkVersion 21
+            versionNameSuffix "-dev"
+            applicationIdSuffix '.dev'
+            //resConfigs "en", "xxhdpi"
+        }
+
+        prod {
+            // If you've configured the defaultConfig block for the release version of
+            // your app, you can leave this block empty and Gradle uses configurations in
+            // the defaultConfig block instead. You still need to create this flavor.
+            // Otherwise, all variants use the "dev" flavor configurations.
+            dimension "stage"
+        }
+    }
+
+    if (isDebug()) {
+        gradle.taskGraph.whenReady {
+            tasks.each { task ->
+                if (task.name.contains("Test") || task.name.contains("Lint")) {
+                    task.enabled = false
+                }
+            }
+        }
+    }
+}
+
+def isDebug() {
+    def taskNames = gradle.startParameter.taskNames
+    for (tn in taskNames) {
+        if ((tn.contains("install") || tn.contains("assemble")) && tn.contains("Debug")) {
+            return true
+        }
+    }
+    return false
+}
