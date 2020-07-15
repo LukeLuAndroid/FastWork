@@ -1,12 +1,39 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
+
+    project.ext.load = { path ->
+        Reader reader = new File(project.rootDir.getPath(), path).newReader()
+        def config = new Properties()
+        config.load(reader)
+        reader.close()
+
+        return config
+    }
+
+    def ps = load('local.properties')
+
     ext.kotlin_version = '1.3.50'
     repositories {
         google()
         jcenter()
         maven {
             url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            url uri(ps['maven.url'])
+            credentials {
+                username = ps['maven.userName']
+                password = ps['maven.userPass']
+            }
+        }
+
+        maven {
+            url uri(ps['maven.snaUrl'])
+            credentials {
+                username = ps['maven.userName']
+                password = ps['maven.userPass']
+            }
         }
     }
 
@@ -19,12 +46,31 @@ buildscript {
     }
 }
 
+project.ext.load = { path ->
+    Reader reader = new File(project.rootDir.getPath(), path).newReader()
+    def config = new Properties()
+    config.load(reader)
+    reader.close()
+
+    return config
+}
+
+def local = load('local.properties')
+
 allprojects {
     repositories {
         google()
         jcenter()
     }
     it.apply plugin: "org.sonarqube"
+
+    ext {
+        mavenUrl = local['maven.url']
+        snapshotUrl = local['maven.snaUrl']
+
+        mavenName = local['maven.userName']
+        mavenPass = local['maven.userPass']
+    }
 }
 
 task clean(type: Delete) {

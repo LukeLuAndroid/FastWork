@@ -2,3 +2,5 @@ include ':app'
 
 include ':tools:com.fast.mapping'
 include ':tools:com.fast.encrypt.javaswing'
+
+include ':library:socket'
