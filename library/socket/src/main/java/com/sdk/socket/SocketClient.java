@@ -135,7 +135,7 @@ public class SocketClient {
                     String message = null;
                     while (message == null) {
                         stream = socket.getInputStream();
-                        message = DataReader.readToEnd(stream, "utf-8");
+                        message = DataReader.readToEndWithOutClose(stream, "utf-8");
 
                         try {
                             JSONObject object = new JSONObject(message);
@@ -183,7 +183,7 @@ public class SocketClient {
                     socket.shutdownOutput();
 
                     stream = socket.getInputStream();
-                    String message = DataReader.readToEnd(stream, "utf-8");
+                    String message = DataReader.readToEndWithOutClose(stream, "utf-8");
                     if (mListener != null && !TextUtils.isEmpty(message)) {
                         mListener.onReceive(message);
                     }

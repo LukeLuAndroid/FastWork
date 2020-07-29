@@ -61,7 +61,23 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven {
+            url uri(local['maven.url'])
+            credentials {
+                username = local['maven.userName']
+                password = local['maven.userPass']
+            }
+        }
+
+        maven {
+            url uri(local['maven.snaUrl'])
+            credentials {
+                username = local['maven.userName']
+                password = local['maven.userPass']
+            }
+        }
     }
+
     it.apply plugin: "org.sonarqube"
 
     ext {

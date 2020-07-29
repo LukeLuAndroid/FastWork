@@ -22,10 +22,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.sdk.socket.MsgData.MESSAGE_REQUEST_DEBUG;
-import static com.sdk.socket.MsgData.MESSAGE_REQUEST_LOG;
-import static com.sdk.socket.MsgData.MESSAGE_REQUEST_OTHER;
-import static com.sdk.socket.MsgData.MESSAGE_REQUEST_URL;
+import static com.sdk.socket.MsgData.CODE_REQUEST_DATA;
+import static com.sdk.socket.MsgData.CODE_REQUEST_DEBUG;
+import static com.sdk.socket.MsgData.CODE_REQUEST_LOG;
+import static com.sdk.socket.MsgData.CODE_REQUEST_OTHER;
 
 /**
  * @author lenovo
@@ -129,9 +129,9 @@ public class SocketServer {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case MESSAGE_REQUEST_URL:
-                case MESSAGE_REQUEST_DEBUG:
-                case MESSAGE_REQUEST_LOG:
+                case CODE_REQUEST_DATA:
+                case CODE_REQUEST_DEBUG:
+                case CODE_REQUEST_LOG:
                     MsgObject mobject = (MsgObject) msg.obj;
                     handleMsgObject(mobject);
                     break;
@@ -201,7 +201,7 @@ public class SocketServer {
         public void run() {
             try {
                 while (socket != null && !socket.isClosed()) {
-                    String message = DataReader.readToEnd(socket.getInputStream(), "UTF-8");
+                    String message = DataReader.readToEndWithOutClose(socket.getInputStream(), "UTF-8");
                     handleClient(message);
                 }
             } catch (Exception e) {
@@ -218,19 +218,18 @@ public class SocketServer {
                 MsgData msgData = new MsgData();
                 msgData.getFromJson(json);
                 if (msgData != null) {
-                    Message.obtain(handler, MESSAGE_REQUEST_URL, new MsgObject(msgData, socket)).sendToTarget();
                     switch (msgData.getCode()) {
-                        case MESSAGE_REQUEST_URL:
-                            Message.obtain(handler, MESSAGE_REQUEST_URL, new MsgObject(msgData, socket)).sendToTarget();
+                        case CODE_REQUEST_DATA:
+                            Message.obtain(handler, CODE_REQUEST_DATA, new MsgObject(msgData, socket)).sendToTarget();
                             break;
-                        case MESSAGE_REQUEST_DEBUG:
-                            Message.obtain(handler, MESSAGE_REQUEST_DEBUG, new MsgObject(msgData, socket)).sendToTarget();
+                        case CODE_REQUEST_DEBUG:
+                            Message.obtain(handler, CODE_REQUEST_DEBUG, new MsgObject(msgData, socket)).sendToTarget();
                             break;
-                        case MESSAGE_REQUEST_LOG:
-                            Message.obtain(handler, MESSAGE_REQUEST_LOG, new MsgObject(msgData, socket)).sendToTarget();
+                        case CODE_REQUEST_LOG:
+                            Message.obtain(handler, CODE_REQUEST_LOG, new MsgObject(msgData, socket)).sendToTarget();
                             break;
                         default:
-                            Message.obtain(handler, MESSAGE_REQUEST_OTHER, new MsgObject(msgData, socket)).sendToTarget();
+                            Message.obtain(handler, CODE_REQUEST_OTHER, new MsgObject(msgData, socket)).sendToTarget();
                             break;
                     }
                 }
@@ -238,8 +237,6 @@ public class SocketServer {
                 handleFromOtherType(message);
             }
         }
-
-        //
 
         /**
          * 处理其他情况(非json数据)

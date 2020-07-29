@@ -13,10 +13,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
-public class DataReader
-{
-    public static String readToEnd(InputStream io, String en) throws IOException
-    {
+public class DataReader {
+    public static String readToEnd(InputStream io, String en) throws IOException {
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new InputStreamReader(io, en));
@@ -29,10 +27,22 @@ public class DataReader
             }
             return lines.toString();
         } catch (IOException e) {
-        }finally {
+        } finally {
             close(reader);
         }
         return "";
+    }
+
+    public static String readToEndWithOutClose(InputStream io, String en) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(io, en));
+        StringBuffer lines = new StringBuffer();
+        String line = "";
+
+        while ((line = reader.readLine()) != null) {
+            lines.append(line);
+        }
+
+        return lines.toString();
     }
 
     public static void close(Closeable closeable) {

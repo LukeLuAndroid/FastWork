@@ -20,9 +20,18 @@ public class SocketManager {
         return client;
     }
 
+    public String getData(MsgData data) {
+        return getSocketData(data);
+    }
+
+    public void setData(MsgData data) {
+        getSocketData(data);
+    }
+
     public String getURLManager() {
         MsgData data = new MsgData();
         data.setCode(1);
+        data.setType(MsgData.TYPE_REQUEST_URLMANAGER);
         data.setRequest("request url");
         return getSocketData(data);
     }

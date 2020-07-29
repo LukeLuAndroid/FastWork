@@ -8,12 +8,23 @@ import org.json.JSONObject;
  * @date 2020/6/23
  */
 public class MsgData {
-    public static final int MESSAGE_REQUEST_URL = 1;
-    public static final int MESSAGE_REQUEST_DEBUG = 2;
-    public static final int MESSAGE_REQUEST_LOG = 3;
-    public static final int MESSAGE_REQUEST_OTHER = 4;
+    /**
+     * 请求的code
+     */
+    public static final int CODE_REQUEST_DATA = 1;
+    public static final int CODE_REQUEST_DEBUG = 2;
+    public static final int CODE_REQUEST_LOG = 3;
+    public static final int CODE_REQUEST_OTHER = 4;
+
+    /**
+     * 请求的type
+     */
+    public static final int TYPE_REQUEST_DSP_DEBUG = 0;
+    public static final int TYPE_REQUEST_URLMANAGER = 1;
+    public static final int TYPE_REQUEST_SDKLIST = 2;
 
     private int code;
+    private int type;
     private String request;
     private String response;
 
@@ -23,6 +34,14 @@ public class MsgData {
 
     public void setCode(int code) {
         this.code = code;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
     }
 
     public String getRequest() {
@@ -45,6 +64,7 @@ public class MsgData {
         try {
             JSONObject object = new JSONObject();
             object.put("code", code);
+            object.put("type", type);
             object.put("request", request);
             object.put("response", response);
             return object.toString();
@@ -56,6 +76,7 @@ public class MsgData {
     public void getFromJson(JSONObject object) {
         if (object != null) {
             code = object.optInt("code", -1);
+            type = object.optInt("type", -1);
             request = object.optString("request", "");
             response = object.optString("response", "");
         }

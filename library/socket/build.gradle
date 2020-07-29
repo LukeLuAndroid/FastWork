@@ -1,12 +1,10 @@
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
 def publishedGroupId = 'com.sdk.net'
 def artifact_Id = 'socket'
-def artifact_version = '0.0.6-SNAPSHOT'
+def artifact_version = '0.0.9-SNAPSHOT'
 
 android {
     compileSdkVersion 29
@@ -37,12 +35,12 @@ android {
             java.exclude("*/BuildConfig")
         }
     }
+
+    packageBuildConfig = false
 }
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
-//    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-//    api 'com.google.code.gson:gson:2.8.6'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
