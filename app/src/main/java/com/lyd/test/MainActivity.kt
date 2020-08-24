@@ -3,6 +3,7 @@ package com.lyd.test
 import android.content.Context
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
+import android.nfc.Tag
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
@@ -15,6 +16,10 @@ import java.net.Socket
 
 
 class MainActivity : AppCompatActivity() {
+
+    object MainActivity {
+        public const val TAG = "MainActivity"
+    }
 
     lateinit var socketBtn: Button
 
@@ -127,13 +132,24 @@ class MainActivity : AppCompatActivity() {
 //        client.write(data)
 
         var urlManager = SocketManager.getInstance().urlManager
-        Log.d("MainActivity","urlManager = "+urlManager)
+        Log.d("MainActivity", "urlManager = " + urlManager)
 
         var debugInfo = SocketManager.getInstance().debugInfo
-        Log.d("MainActivity","debugInfo = "+debugInfo)
+        Log.d("MainActivity", "debugInfo = " + debugInfo)
 
         var log = SocketManager.getInstance().log
-        Log.d("MainActivity","log = "+log)
+        Log.d("MainActivity", "log = " + log)
+
+        var data: MsgData = MsgData()
+        data.code = MsgData.CODE_REQUEST_DATA
+        data.type = MsgData.TYPE_REQUEST_DSP_DEBUG
+
+        var sData: String? = SocketManager.getInstance().getData(data)
+        //var jsonObject = JSONObject(sData)
+        Log.d("MainActivity", "sData=" + sData)
     }
 
+    override fun onDestroy() {
+        SocketManager.getInstance().close()
+    }
 }

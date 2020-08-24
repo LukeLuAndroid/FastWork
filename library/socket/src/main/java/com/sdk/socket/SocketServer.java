@@ -8,6 +8,7 @@ import android.text.TextUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -57,7 +58,7 @@ public class SocketServer {
      */
     public void init() {
         if (executorService == null) {
-            executorService = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE, 0L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+            executorService = new ThreadPoolExecutor(POOL_SIZE, Integer.MAX_VALUE, 0L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable r) {
                     Thread t = new Thread(r);
@@ -106,8 +107,8 @@ public class SocketServer {
                         Socket socket = ss.accept();
                         executorService.execute(new ServerSocketRunnable(SocketServer.this, socket, serverHandler));
                     } catch (Exception e) {
+                        DataReader.close(ss);
                         if (!isServerClosed.get()) {
-                            DataReader.close(ss);
                             createSocket();
                             ss = server;
                         }
@@ -166,16 +167,14 @@ public class SocketServer {
         executorService.execute(new Runnable() {
             @Override
             public void run() {
-                PrintWriter os = null;
+                DataOutputStream os = null;
                 try {
                     MsgData data = mobject.data;
-                    os = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
-                    os.print(data.toJson());
-                    os.flush();
+                    os = new DataOutputStream(socket.getOutputStream());
+                    data.writeTo(os);
                 } catch (IOException e) {
                 } finally {
-                    DataReader.close(os);
-                    DataReader.close(socket);
+//                    DataReader.close(os);
                     count.countDown();
                 }
             }
@@ -201,7 +200,7 @@ public class SocketServer {
         public void run() {
             try {
                 while (socket != null && !socket.isClosed()) {
-                    String message = DataReader.readToEndWithOutClose(socket.getInputStream(), "UTF-8");
+                    String message = DataReader.readWithDataStream(socket.getInputStream(), "UTF-8");
                     handleClient(message);
                 }
             } catch (Exception e) {
@@ -217,20 +216,26 @@ public class SocketServer {
                 JSONObject json = new JSONObject(message);
                 MsgData msgData = new MsgData();
                 msgData.getFromJson(json);
-                if (msgData != null) {
+                if (msgData != null && handler != null) {
+                    Message msg = null;
                     switch (msgData.getCode()) {
                         case CODE_REQUEST_DATA:
-                            Message.obtain(handler, CODE_REQUEST_DATA, new MsgObject(msgData, socket)).sendToTarget();
+                            msg = Message.obtain(handler, CODE_REQUEST_DATA, new MsgObject(msgData, socket));
                             break;
                         case CODE_REQUEST_DEBUG:
-                            Message.obtain(handler, CODE_REQUEST_DEBUG, new MsgObject(msgData, socket)).sendToTarget();
+                            msg = Message.obtain(handler, CODE_REQUEST_DEBUG, new MsgObject(msgData, socket));
                             break;
                         case CODE_REQUEST_LOG:
-                            Message.obtain(handler, CODE_REQUEST_LOG, new MsgObject(msgData, socket)).sendToTarget();
+                            msg = Message.obtain(handler, CODE_REQUEST_LOG, new MsgObject(msgData, socket));
                             break;
                         default:
-                            Message.obtain(handler, CODE_REQUEST_OTHER, new MsgObject(msgData, socket)).sendToTarget();
+                            msg = Message.obtain(handler, CODE_REQUEST_OTHER, new MsgObject(msgData, socket));
                             break;
+                    }
+                    if (msg != null) {
+                        handler.handleMessage(msg);
+                    } else if (server.get() != null) {
+                        server.get().writeDataToClient(new MsgObject(msgData, socket));
                     }
                 }
             } catch (JSONException e) {

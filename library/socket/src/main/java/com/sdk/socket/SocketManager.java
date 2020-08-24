@@ -13,9 +13,10 @@ public class SocketManager {
     private SocketManager() {
     }
 
-
     private SocketClient createSocket() {
-        SocketClient client = new SocketClient("127.0.0.1", 10110);
+        SocketClient client = SocketClient.getInstance();
+        client.setSocketInfo("127.0.0.1", 10110);
+        //SocketClient client = new SocketClient("127.0.0.1",10110);
         client.connect();
         return client;
     }
@@ -30,23 +31,20 @@ public class SocketManager {
 
     public String getURLManager() {
         MsgData data = new MsgData();
-        data.setCode(1);
+        data.setCode(MsgData.CODE_REQUEST_DATA);
         data.setType(MsgData.TYPE_REQUEST_URLMANAGER);
-        data.setRequest("request url");
         return getSocketData(data);
     }
 
     public String getDebugInfo() {
         MsgData data = new MsgData();
-        data.setCode(2);
-        data.setRequest("request debug");
+        data.setCode(MsgData.CODE_REQUEST_DEBUG);
         return getSocketData(data);
     }
 
     public String getLog() {
         MsgData data = new MsgData();
-        data.setCode(3);
-        data.setRequest("request log");
+        data.setCode(MsgData.CODE_REQUEST_LOG);
         return getSocketData(data);
     }
 
@@ -58,6 +56,13 @@ public class SocketManager {
         } else {
             return response.getResponse();
         }
+    }
+
+    /**
+     * 关闭服务
+     */
+    public void close() {
+        SocketClient.getInstance().close();
     }
 
 }

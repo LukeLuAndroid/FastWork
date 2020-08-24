@@ -7,6 +7,8 @@ import android.text.TextUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -31,6 +33,17 @@ public class SocketClient {
     private String ip;
     private int port = -1;
 
+    private static class SingleTonHolder {
+        private static final SocketClient INSTANCE = new SocketClient();
+    }
+
+    public static SocketClient getInstance() {
+        return SingleTonHolder.INSTANCE;
+    }
+
+    private SocketClient() {
+    }
+
     private ExecutorService executor = new ThreadPoolExecutor(5, 5, 0L, TimeUnit.SECONDS, new LinkedTransferQueue<Runnable>(), new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
@@ -43,7 +56,11 @@ public class SocketClient {
     public SocketClient(String ip, int port) {
         this.ip = ip;
         this.port = port;
-        handler = new Handler(Looper.getMainLooper());
+    }
+
+    public void setSocketInfo(String ip, int port) {
+        this.ip = ip;
+        this.port = port;
     }
 
     public boolean connect() {
@@ -61,14 +78,14 @@ public class SocketClient {
             public void run() {
                 try {
                     socket = new Socket(ip, port);
-                    socket.setSoTimeout(4000);
+                    socket.setSoTimeout(3000);
                 } catch (IOException e) {
                 }
                 latch.countDown();
             }
         });
         try {
-            latch.await(3, TimeUnit.SECONDS);
+            latch.await(4, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
         return !isSocketClosed();
@@ -124,18 +141,20 @@ public class SocketClient {
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                PrintWriter pw = null;
+                DataOutputStream output = null;
                 InputStream stream = null;
                 try {
-                    pw = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
-                    pw.print(msg.toJson());
-                    pw.flush();
-                    socket.shutdownOutput();
+                    output = new DataOutputStream(socket.getOutputStream());
+                    msg.writeTo(output);
 
                     String message = null;
                     while (message == null) {
                         stream = socket.getInputStream();
-                        message = DataReader.readToEndWithOutClose(stream, "utf-8");
+                        message = DataReader.readWithDataStream(stream, "utf-8");
+
+                        if (message == null) {
+                            continue;
+                        }
 
                         try {
                             JSONObject object = new JSONObject(message);
@@ -147,9 +166,9 @@ public class SocketClient {
                     }
                 } catch (IOException e) {
                 } finally {
-                    DataReader.close(stream);
-                    DataReader.close(pw);
-                    close();
+//                    DataReader.close(stream);
+//                    DataReader.close(pw);
+//                    close();
                 }
                 latch.countDown();
             }
@@ -183,15 +202,15 @@ public class SocketClient {
                     socket.shutdownOutput();
 
                     stream = socket.getInputStream();
-                    String message = DataReader.readToEndWithOutClose(stream, "utf-8");
+                    String message = DataReader.readWithDataStream(stream, "utf-8");
                     if (mListener != null && !TextUtils.isEmpty(message)) {
                         mListener.onReceive(message);
                     }
                 } catch (IOException e) {
                 } finally {
-                    DataReader.close(stream);
-                    DataReader.close(pw);
-                    close();
+//                    DataReader.close(stream);
+//                    DataReader.close(pw);
+//                    close();
                 }
             }
         });

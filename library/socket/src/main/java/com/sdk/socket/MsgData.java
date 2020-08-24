@@ -3,6 +3,9 @@ package com.sdk.socket;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 /**
  * @author lenovo
  * @date 2020/6/23
@@ -22,6 +25,12 @@ public class MsgData {
     public static final int TYPE_REQUEST_DSP_DEBUG = 0;
     public static final int TYPE_REQUEST_URLMANAGER = 1;
     public static final int TYPE_REQUEST_SDKLIST = 2;
+    public static final int TYPE_REQUEST_PLUGINS = 3;
+
+    /**
+     * 表示code的最长值
+     */
+    public static final int CODE_TYPE_LENGTH = 10;
 
     private int code;
     private int type;
@@ -80,5 +89,14 @@ public class MsgData {
             request = object.optString("request", "");
             response = object.optString("response", "");
         }
+    }
+
+    public void writeTo(DataOutputStream output) throws IOException {
+        byte[] data = toJson().getBytes();
+        int len = data.length + 5;
+        output.writeByte(getCode());
+        output.writeInt(len);
+        output.write(data);
+        output.flush();
     }
 }
