@@ -14,12 +14,14 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author lenovo
@@ -32,6 +34,8 @@ public class SocketClient {
     private Object lock = new Object();
     private String ip;
     private int port = -1;
+    private int retryNum = 0;
+    private int retryCount = 0;
 
     private static class SingleTonHolder {
         private static final SocketClient INSTANCE = new SocketClient();
@@ -61,6 +65,10 @@ public class SocketClient {
     public void setSocketInfo(String ip, int port) {
         this.ip = ip;
         this.port = port;
+    }
+
+    public void setRetryNum(int num) {
+        this.retryNum = num;
     }
 
     public boolean connect() {
@@ -137,6 +145,7 @@ public class SocketClient {
             return msg;
         }
 
+        final AtomicBoolean hasException = new AtomicBoolean(false);
         final CountDownLatch latch = new CountDownLatch(1);
         executor.execute(new Runnable() {
             @Override
@@ -164,19 +173,28 @@ public class SocketClient {
                         } catch (JSONException e) {
                         }
                     }
+                    retryCount = 0;
+                    hasException.compareAndSet(true, false);
                 } catch (IOException e) {
-                } finally {
-//                    DataReader.close(stream);
-//                    DataReader.close(pw);
-//                    close();
+                    if (e != null && e instanceof SocketException) {
+                        hasException.compareAndSet(false, true);
+                    }
                 }
                 latch.countDown();
             }
         });
+
         try {
             latch.await();
         } catch (InterruptedException e) {
         }
+
+        if (hasException.get() && retryCount < retryNum) {
+            retryCount++;
+            close();
+            return getServerData(msg);
+        }
+
         return msg;
     }
 

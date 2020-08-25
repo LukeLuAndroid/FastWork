@@ -4,7 +4,7 @@ apply plugin: 'maven-publish'
 
 def publishedGroupId = 'com.sdk.net'
 def artifact_Id = 'socket'
-def artifact_version = '0.1.5-SNAPSHOT'
+def artifact_version = '0.1.6-SNAPSHOT'
 
 android {
     compileSdkVersion 29

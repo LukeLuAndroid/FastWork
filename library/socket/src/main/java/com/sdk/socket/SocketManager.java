@@ -16,7 +16,7 @@ public class SocketManager {
     private SocketClient createSocket() {
         SocketClient client = SocketClient.getInstance();
         client.setSocketInfo("127.0.0.1", 10110);
-        //SocketClient client = new SocketClient("127.0.0.1",10110);
+        client.setRetryNum(1);
         client.connect();
         return client;
     }
