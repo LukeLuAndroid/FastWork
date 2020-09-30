@@ -99,4 +99,10 @@ public class MsgData {
         output.write(data);
         output.flush();
     }
+
+    public void writeShortTo(DataOutputStream output) throws IOException {
+        byte[] data = toJson().getBytes();
+        output.write(data);
+        output.flush();
+    }
 }

@@ -34,7 +34,7 @@ import static com.sdk.socket.MsgData.CODE_REQUEST_OTHER;
  */
 public class SocketServer {
     private static final int PORT = 10110;
-    private static final int POOL_SIZE = 5;
+    private static final int POOL_SIZE = 8;
     private ServerSocket server;
     private ServerHandler serverHandler;
     private ExecutorService executorService;
@@ -171,10 +171,11 @@ public class SocketServer {
                 try {
                     MsgData data = mobject.data;
                     os = new DataOutputStream(socket.getOutputStream());
-                    data.writeTo(os);
+                    data.writeShortTo(os);
                 } catch (IOException e) {
                 } finally {
-//                    DataReader.close(os);
+                    DataReader.close(os);
+                    DataReader.close(socket);
                     count.countDown();
                 }
             }
@@ -200,7 +201,8 @@ public class SocketServer {
         public void run() {
             try {
                 while (socket != null && !socket.isClosed()) {
-                    String message = DataReader.readWithDataStream(socket.getInputStream(), "UTF-8");
+//                    String message = DataReader.readWithDataStream(socket.getInputStream(), "UTF-8");
+                    String message = DataReader.readToEndWithOutClose(socket.getInputStream(), "UTF-8");
                     handleClient(message);
                 }
             } catch (Exception e) {

@@ -154,12 +154,13 @@ public class SocketClient {
                 InputStream stream = null;
                 try {
                     output = new DataOutputStream(socket.getOutputStream());
-                    msg.writeTo(output);
+                    msg.writeShortTo(output);
+                    socket.shutdownOutput();
 
                     String message = null;
                     while (message == null) {
                         stream = socket.getInputStream();
-                        message = DataReader.readWithDataStream(stream, "utf-8");
+                        message = DataReader.readToEndWithOutClose(stream, "utf-8");
 
                         if (message == null) {
                             continue;
@@ -179,6 +180,8 @@ public class SocketClient {
                     if (e != null && e instanceof SocketException) {
                         hasException.compareAndSet(false, true);
                     }
+                }finally {
+                    DataReader.close(stream);
                 }
                 latch.countDown();
             }
